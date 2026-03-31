@@ -7,6 +7,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <cuda_runtime.h>
+//constantes
+//usare esta cantidad de hilo por la ocupacion
+const int threadsperblock = 256;
 // kernel
 __global__ void suma (int *vec1, int *vec_sum, int N){
     //funcion para sumar dos vectores de n elementos
@@ -31,10 +34,6 @@ void opt(int dat, int *bloc, int *thre){
 //aqui va la funcion principal despues de crear el kernel
 
 int main(){
-
-    //aqui declaro los punteros y la cantidad de datos de cada vector
-    int *hst_vec1, *hst_vecsum;
-    int *dev_vec1, *dev_vecsum;
 
     //pruebo con un array de enteros de diferentes valores para verificar los tiempos de ejecucion en cada caso
     int val[] = {
@@ -65,36 +64,22 @@ int main(){
 
     //comenzamos a iterar sobre los elementos del array
     for(int i = 0; i < tam; i++){
+        //declaro las variables que voy a usar al lanzar el kernel
+        int hilos, bloques;
+        //antes de ocupar los recursos del sistema, debo calcular la ocupacion optima de hilos y bloques segun N datos       
+
+        //aqui declaro los punteros y la cantidad de datos de cada vector
+        int *hst_vec1 = NULL, *hst_vecsum = NULL;
+        int *dev_vec1 = NULL, *dev_vecsum = NULL;
+        
         //variable que contiene los datos iterados del array
         int N = val[i];
         //en este caso al usar valores grandes, tengo que usar el tipo de dato size_t, que representa tama;os en forma de bytes, para no tener problemas
         size_t bytes = N * sizeof(int);
         //guarda el tama;o en la variable, del valor iterado multiplicado por el tipo de datos que es (int 4 bytes * millones de elementos)
 
-        //es mi primer programa de este tipo, para visualizarlo imprimo la informacion que me ayuda a entenderlo
-        printf("\n\n\n");
-        printf("son %d elementos y el tama;o en megabytes es", N, bytes / (1024 * 1024));
-        printf("\n\n\n");
-        //divido la cantidad total de bytes entre la cantidad de bytes que hay en un megabyte (x/(1024*1024))
-
         //una vez establecido el tama;o que necesito, y declaradas las variables, puedo apartar el espacio en memoria necesario
         //memoria en el host
-
-        //comodeclare los punteros fuera del bucle, tengo que liberar la memoria antes de volverla a asignar
-        if(hst_vec1 != NULL){
-            free(hst_vec1);
-        }
-        if(hst_vecsum != NULL){
-            free(hst_vecsum);
-        }
-        if (dev_vec1 != NULL){
-            cudaFree(dev_vec1);
-        }
-        if(dev_vecsum != NULL){
-            cudaFree(dev_vecsum);
-        }
-        //mucho codigo, la suguiente lo declaro dentro del bucle
-        //apenas empiezo a ver como se manejan los errores al reservar la memoria
 
         hst_vec1 = (int*)malloc(bytes);
         hst_vecsum = (int*)malloc(bytes);
@@ -112,12 +97,18 @@ int main(){
             exit(EXIT_FAILURE);
 
         }
-        cudaError err = cudaMalloc((void**)&dev_vecsum, bytes);
+        cudaError err1 = cudaMalloc((void**)&dev_vecsum, bytes);
         if(err != cudaSuccess){
-            printf("error a la hora de apartar memoria en cuda %s", cudaGetErrorName(err));
+            printf("error a la hora de apartar memoria en cuda %s", cudaGetErrorName(err1));
             exit(EXIT_FAILURE);
         } 
         //los errores a la hora de apartar memoria normalmente ocurren cuando la memoria esta completamente llena, lo mejor es terminar el proceso
+
+        //despues de las partes en donde pueden haber errores, puedo calcular hilos y bloques
+        hilos = threadsperblock;
+        bloques = (N + hilos - 1)/hilos;
+        //esta formula redondea el numero de recursos por arriba, puede que sobren pero es aceptable en cuda al precer
+        //aun falta buscar el tipo de resolucion que tendran otros tipos de problemas
 
         //una vez apartada la memoria, puedo inicializarla
         for(int i = 0; i < N; i++){
@@ -125,93 +116,57 @@ int main(){
             hst_vec1[i] = i + 1;
         }
         //esto podria ser un problema, ya que la gpu esta esperando a que la cpu inicialize los datos, mas adelante inicializre la cpu antes de apartar espacio en gpu
-
+        
         //una vez inicializada tengo que transferir los datos a la gpu, al mismo tiempo comienzo a medir el tiempo
         cudaEventRecord(start);
-        cudaMemcpy(dev_vec1, hst_vec1, N, cudaMemcpyHostToDevice);
+        cudaMemcpy(dev_vec1, hst_vec1, N * sizeof(int), cudaMemcpyHostToDevice);
         cudaEventRecord(stop);
+        cudaEventSynchronize(stop);
         //las variables guardan el flag de cada momento para medir la diferencia y saber el tiempo
-        float t1; // variable que guarda el primer tiempo medido
+        float t1 = 0, t2 = 0, t3 = 0; // variable que guarda el primer tiempo medido
         cudaEventElapsedTime(&t1, start, stop);
-        //esta funcion calcula el tiempo en milisegundost1, start, stop);
-        //esta funcion calcula el tiempo en milisegundos
         
-        /*
-        En esta parte del codigo tuve que desciarme, me di cuenta de que necesitaba
-        calcular el uso optimo de los recursos de mi gpu.
+        //lanzo y mido los tiempos de ejecucion del kernel
+        cudaEventRecord(start);
+        suma<<<bloques, hilos>>>(dev_vec1, dev_vecsum, N);
+        cudaEventRecord(stop);
+        cudaEventSynchronize(stop);
+        cudaEventElapsedTime(&t2, start, stop);
 
-        Para los datos del array, que van desde 32 elementos, hasta varios millones de ellos
-        tuve que comenzar a buscar informacion sobre como funcionan las restricciones
-        y la optimizacion de recursos en la gpu, ahi me tope con varios problemas de optimizacion,
-        uso de memoria, limites fisicos y demas cosas.
+        //copio la memoria de vuelta y mido los tiempos
+        //en cudamemcopy implicitamente tiene una sincronizacion, espera a que todos los procesos esten listos
 
-        este codigo espagueti queda como primera prueba en donde trato de optimizar los recursos
-        de mi gpu para cada caso de N datos
+        //copio los datos de vuelta
+        cudaEventRecord(start);
+        cudaMemcpy(hst_vecsum, dev_vecsum, N * sizeof(int), cudaMemcpyDeviceToHost);
+        cudaEventRecord(stop);
+        cudaEventSynchronize(stop);
+        cudaEventElapsedTime(&t3, start, stop);
 
-        puede que no sea perfecto pero es el primer acercamiento que he tenido con este tipo de problemas
-        ya que hasta ahora no habia trabajado con procesamiento de datos en paralelo
+        //comienza la muestra de resultados
 
-        Para esto he extraido las caracteristicas de la gpu de mi laptop, con las cuales pienso crear una funcion
-        para calcular cuantos hilos y cuantos bloques puedo usar de forma optima.
+        //imprimo la cantidad de datos
+        //es mi primer programa de este tipo, para visualizarlo imprimo la informacion que me ayuda a entenderlo
+        printf("\n");
+        printf("son %d elementos y el tama;o en megabytes es %.5f mb", N, (double)bytes / (1024 * 1024));
+        printf("\n");        cudaEventSynchronize(stop);
 
-        //////////////////////////////
-        nombre comercial: 
-        NVIDIA GeForce GTX 1650 
+        //divido la cantidad total de bytes entre la cantidad de bytes que hay en un megabyte (x/(1024*1024))
+        //imprimo la cantidad de recursos usados
+        printf("\nHilos por bloque = %d", hilos);
+        printf("\nBloques = %d", bloques);
+        //imprtmo los tiempos
+        printf("\nTiempo H2T = %.5f ms", t1);
+        printf("\nTiempo P = %.5f ms", t2);
+        printf("\nTiempo D2H = %.5f", t3);
+        printf("\nTiempo total = %.5f ms", t1 + t2 + t3);
+        printf("\n");
+        //al ser una gran cantidad de datos, no los voy a imprimir
 
-        version de compute capability: 
-        7.5
-
-        streaming multiprocessor: 
-        14 
-
-        maximo de hilos por SM: 
-        1024 
-
-        maximo de bloques por SM: 
-        16
-
-        maximo de hilos por bloque: 
-        1024
-
-        maximo de registros por SM:
-        65536
-
-        memoria compartida por bloque:
-        48.00 KB
-
-        warps maximos por SM
-        32
-
-        warps maximos por bloque:
-        32
-
-        maximo de bloques en dada dimencion
-        (x:2147483647, y:65535, z:65535)
-
-        maximo de hilos por bloque en cada dimencion:
-        (x:1024, y:1024, z:64)
-
-        RAM en GPU
-        3.63 GB
-
-        memoria total constante (para lectura de constantes):
-        64.00 KB
-
-        cuantos kernels puedo lanzar a la vez:
-        1
-
-        motores asincronos para copias de datos:
-        3
-
-        //////////////////////////////
-
-        */
-
-
-        //funcion para optimizar los recursos
-
-
-    }   
-    
+        free(hst_vec1);
+        free(hst_vecsum);
+        cudaFree(dev_vec1);
+        cudaFree(dev_vecsum);
+    }  
     return 0;
 }
