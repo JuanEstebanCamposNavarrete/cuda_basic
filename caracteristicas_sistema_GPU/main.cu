@@ -51,7 +51,7 @@ int main(){
         printf("%d\n\n", prop.maxThreadsPerBlock);
         printf("maximo de registros por SM:\n");
         printf("%d\n\n", prop.regsPerMultiprocessor);
-        printf("memoria compartida por bloque:\n");
+        printf("memoria compartida global:\n");
         printf("%.2f KB\n\n", prop.sharedMemPerBlock/1024.0);
         printf("warps maximos por SM\n");
         printf("%d\n\n", prop.maxThreadsPerMultiProcessor/32);
@@ -69,12 +69,20 @@ int main(){
         printf("%d\n\n", prop.concurrentKernels);
         printf("motores asincronos para copias de datos:\n");
         printf("%d\n\n", prop.asyncEngineCount);
-/*
+
+        int clockRate;
+        int memoryClockRate;
+        
+        // Obtener frecuencia del GPU
+        cudaDeviceGetAttribute(&clockRate, cudaDevAttrClockRate, i);
+        // Obtener frecuencia de la memoria
+        cudaDeviceGetAttribute(&memoryClockRate, cudaDevAttrMemoryClockRate, i);
+        
         printf("frecuencia de GPU en kHz:\n");
-        printf("%.2f GHz\n\n", prop.clockRate/1000000.0);
+        printf("%.2f GHz\n\n", clockRate / 1000000.0);
         printf("frecuencia de la memoria:\n");
-        printf("%.2f GHz\n\n", prop.memoryClockRate/1000000.0);
-*/
+        printf("%.2f GHz\n\n", memoryClockRate / 1000000.0);
+
         printf("//////////////////////////////\n");
 
     }

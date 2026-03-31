@@ -1,0 +1,99 @@
+//////////////////////////////
+nombre comercial: 
+NVIDIA GeForce GTX 1650 
+
+version de compute capability: 
+7.5
+
+streaming multiprocessor: 
+14 
+
+maximo de hilos por SM: 
+1024 
+
+maximo de bloques por SM: 
+16
+
+maximo de hilos por bloque: 
+1024
+
+maximo de registros por SM:
+65536
+
+memoria compartida global:
+48.00 KB
+
+warps maximos por SM
+32
+
+warps maximos por bloque:
+32
+
+maximo de bloques en dada dimencion
+(x:2147483647, y:65535, z:65535)
+
+maximo de hilos por bloque en cada dimencion:
+(x:1024, y:1024, z:64)
+
+RAM en GPU
+3.63 GB
+
+memoria total constante (para lectura de constantes):
+64.00 KB
+
+cuantos kernels puedo lanzar a la vez:
+1
+
+motores asincronos para copias de datos:
+3
+
+frecuencia de GPU en kHz:
+1.51 GHz
+
+frecuencia de la memoria:
+6.00 GHz
+
+//////////////////////////////
+
+
+┌─────────────────────────────────────────────────────┐
+│         Streaming Multiprocessor (SM)               │
+│                                                     │
+│  ┌─────────────────────────────────────────────┐    │
+│  │        4 Warp Schedulers                    │    │
+│  │    Cada uno maneja 32 threads (1 warp)      │    │
+│  └─────────────────────────────────────────────┘    │
+│                                                     │
+│  ┌─────────────────────────────────────────────┐    │
+│  │        64 CUDA Cores                        │    │
+│  │    ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐      │    │
+│  │    │Core 0│ │Core 1│ │Core 2│ │Core 3│ ...  │    │
+│  │    └──────┘ └──────┘ └──────┘ └──────┘      │    │
+│  └─────────────────────────────────────────────┘    │
+│                                                     │
+│  ┌─────────────────────────────────────────────┐    │
+│  │        8 Tensor Cores                       │    │
+│  │    (Para operaciones de matriz)             │    │
+│  └─────────────────────────────────────────────┘    │
+│                                                     │
+│  ┌─────────────────────────────────────────────┐    │
+│  │        16 LDST Units                        │    │
+│  │    (Carga/almacenamiento de memoria)        │    │
+│  └─────────────────────────────────────────────┘    │
+│                                                     │
+│  ┌─────────────────────────────────────────────┐    │
+│  │        8 SFU (Special Function Units)       │    │
+│  │    (seno, coseno, sqrt, etc.)               │    │
+│  └─────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────┘
+
+
+
+Hilos/Blk	Warps/Blk	Bloques/SM	Hilos/SM	Ocupación	Shared máx por bloque
+64	        2	        16	        1024	    100%	    3 KB
+128	        4	        8	        1024	    100%	    6 KB
+192	        6	        5	        960	        94%	        9.6 KB
+256	        8	        4	        1024	    100%	    12 KB
+384	        12	        2	        768	        75%	        24 KB
+512	        16	        2	        1024	    100%	    24 KB
+1024    	32	        1	        1024	    100%	    48 KB
