@@ -40,14 +40,14 @@ int main(){
         //todos los valores manejados aqui dentro seran de tiempo int, las operaciones se manejaran en 4 bytes 
         1 << 5, // esto es 2 elevado a la 5 = 32 elementos enteros, 32 * 4 bytes es 128 bytes, y 128 * 8 son 1024 bits
         1 << 8, // 256 elementos
-        1 << 10, // 1024 elementos
-        1 << 12,  // 4096 elementos
-        1 << 14,  // 16384 elementos
-        1 << 16,  // 65536 elementos
-        1 << 18,  // 262144 elementos
-        1 << 20,  // 1048576 elementos
-        1 << 22,  // 4194304 elementos
-        1 << 24   // 16777216 elementos
+        1 << 10, // 1,024 elementos
+        1 << 12,  // 4,096 elementos
+        1 << 14,  // 16,384 elementos
+        1 << 16,  // 65,536 elementos
+        1 << 18,  // 262,144 elementos
+        1 << 20,  // 1,048,576 elementos
+        1 << 22,  // 4,194,304 elementos
+        1 << 24   // 16,777,216 elementos
 
         //el limite seguro es de exponente 31, son 2147 millones de elementos, pero es mejor usar datos unsigned, 1U << 31
     };
