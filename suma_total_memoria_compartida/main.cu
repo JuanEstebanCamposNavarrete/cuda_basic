@@ -117,7 +117,7 @@ int main(){
     int bytes = elementos * 4;
 
     //declaro cuantos bloques voy a necesitar
-    int bloques = (blocks + elementos - 1)/blocks;
+    int bloques = (elementos + blocks - 1)/blocks;
 
     //declaro las variables que voy a usar para inglesar los datos en memoria del host y el device
     int *hst_arr, *hst_sd = NULL, *hst_sh = NULL;

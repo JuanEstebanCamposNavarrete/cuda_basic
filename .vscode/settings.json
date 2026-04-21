@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "*.cuh": "cuda-cpp",
+        "*.cu": "cuda-cpp"
+    },
+    "C_Cpp.intelliSenseEngine": "default"
+}
